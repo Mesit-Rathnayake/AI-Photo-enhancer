@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, ImageIcon, Layers, Zap, Sliders, Download, Sparkles, FolderUp } from 'lucide-react';
+import { Upload, ImageIcon, Layers, Zap, Sliders, Download, Sparkles, FolderUp, AlertTriangle, X } from 'lucide-react';
 import './App.css';
 
 const API_URL = 'http://localhost:8000';
@@ -12,6 +12,7 @@ function App() {
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [sliderPos, setSliderPos] = useState(50);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   // Settings State
   const [model, setModel] = useState('RealESRGAN x2');
@@ -72,16 +73,19 @@ function App() {
       }
 
       if (!response.ok) {
-        throw new Error('Processing failed');
+        const errData = await response.json().catch(() => null);
+        const detail = errData?.detail || 'Processing failed. Please try different settings.';
+        throw new Error(detail);
       }
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setResultUrl(url);
+      setErrorMsg(null);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("An error occurred during processing.");
+      setErrorMsg(error.message || "An unexpected error occurred.");
     } finally {
       setIsProcessing(false);
     }
@@ -121,6 +125,13 @@ function App() {
 
       <div className="main-content">
         <div className="workspace glass-panel">
+          {errorMsg && (
+            <div className="error-banner">
+              <AlertTriangle size={20} />
+              <span>{errorMsg}</span>
+              <button className="error-close" onClick={() => setErrorMsg(null)}><X size={16} /></button>
+            </div>
+          )}
           {tab === 'single' ? (
             <div style={{ padding: '2rem' }}>
               {!previewUrl ? (
