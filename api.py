@@ -38,6 +38,11 @@ async def enhance_single(
     output_ppi: int = Form(300),
     jpeg_quality: int = Form(95),
     face_restoration: bool = Form(False),
+    skin_smoothing: float = Form(0.2),
+    preserve_colors: bool = Form(True),
+    restoration_task: str = Form("None"),
+    old_photo_mode: bool = Form(False),
+    passes: int = Form(1),
 ):
     try:
         # Read image to numpy array
@@ -63,6 +68,11 @@ async def enhance_single(
             output_ppi=output_ppi,
             jpeg_quality=jpeg_quality,
             face_restoration=face_restoration,
+            skin_smoothing=skin_smoothing,
+            preserve_colors=preserve_colors,
+            restoration_task=restoration_task,
+            old_photo_mode=old_photo_mode,
+            passes=passes,
         )
         
         # Verify the file was created
@@ -90,6 +100,11 @@ async def enhance_batch(
     output_ppi: int = Form(300),
     jpeg_quality: int = Form(95),
     face_restoration: bool = Form(False),
+    skin_smoothing: float = Form(0.2),
+    preserve_colors: bool = Form(True),
+    restoration_task: str = Form("None"),
+    old_photo_mode: bool = Form(False),
+    passes: int = Form(1),
 ):
     if not images:
         raise HTTPException(status_code=400, detail="No images provided.")
@@ -117,6 +132,11 @@ async def enhance_batch(
             output_ppi=output_ppi,
             jpeg_quality=jpeg_quality,
             face_restoration=face_restoration,
+            skin_smoothing=skin_smoothing,
+            preserve_colors=preserve_colors,
+            restoration_task=restoration_task,
+            old_photo_mode=old_photo_mode,
+            passes=passes,
         )
         
         if not os.path.exists(zip_path):

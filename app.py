@@ -135,6 +135,21 @@ with gr.Blocks(
                 info="Fixes blurry or warped faces. Highly recommended for portraits."
             )
 
+            skin_smoothing = gr.Slider(
+                minimum=0.0,
+                maximum=1.0,
+                value=0.2,
+                step=0.05,
+                label="Skin Smoothing",
+                info="Softens fine wrinkles inside detected faces. Disabled unless face restoration is enabled.",
+            )
+
+            preserve_colors = gr.Checkbox(
+                label="Preserve Original Colors",
+                value=True,
+                info="Keeps the original photo palette while GFPGAN reconstructs facial detail.",
+            )
+
             tile_size = gr.Dropdown(
                 choices=[128, 256, 512],
                 value=256,
@@ -192,6 +207,8 @@ with gr.Blocks(
             output_ppi,
             jpeg_quality,
             face_restoration,
+            skin_smoothing,
+            preserve_colors,
         ],
         outputs=[
             output_image,
@@ -212,6 +229,8 @@ with gr.Blocks(
             output_ppi,
             jpeg_quality,
             face_restoration,
+            skin_smoothing,
+            preserve_colors,
         ],
         outputs=[
             batch_output,

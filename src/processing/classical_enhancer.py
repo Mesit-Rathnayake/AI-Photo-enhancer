@@ -12,6 +12,7 @@ import numpy as np
 from PIL import Image
 
 from src.models.ai_upscaler import ai_upscale, get_device_name
+from src.models.restormer import restore_image
 
 
 OUTPUT_DIRECTORY = Path("outputs")
@@ -147,6 +148,32 @@ def save_image_with_ppi(
     return str(output_path.resolve())
 
 
+def restore_old_photo(
+    image: np.ndarray,
+) -> np.ndarray:
+    """
+    Quality-only restoration for old photographs.
+    Preserves original colors — only reduces noise and recovers sharpness.
+
+    Pipeline:
+    1. Bilateral filter (edge-preserving noise/grain reduction)
+    2. Unsharp mask (recover fine detail in clothes, textures, background)
+    """
+    logger.info("Applying old photo quality restoration (color-preserving)")
+    result = image.copy()
+
+    # --- 1. Edge-preserving denoising ---
+    result = cv2.bilateralFilter(result, d=9, sigmaColor=75, sigmaSpace=75)
+
+    # --- 2. Unsharp mask for detail recovery ---
+    blurred = cv2.GaussianBlur(result, (0, 0), sigmaX=2.0)
+    result = cv2.addWeighted(result, 1.3, blurred, -0.3, 0)
+    result = np.clip(result, 0, 255).astype(np.uint8)
+
+    logger.info("Old photo quality restoration complete")
+    return result
+
+
 def process_and_save(
     image: np.ndarray | None,
     ai_model: str,
@@ -156,19 +183,60 @@ def process_and_save(
     output_ppi: int,
     jpeg_quality: int,
     face_restoration: bool = False,
+    skin_smoothing: float = 0.2,
+    preserve_colors: bool = True,
+    restoration_task: str = "None",
+    old_photo_mode: bool = False,
+    passes: int = 1,
 ) -> tuple[np.ndarray, str, str]:
-    logger.info(f"Starting single image processing with model {ai_model}, face_restoration={face_restoration}")
+    logger.info(f"Starting single image processing with model {ai_model}, face_restoration={face_restoration}, restoration_task={restoration_task}, old_photo_mode={old_photo_mode}, passes={passes}")
     original = validate_image(image)
+    orig_h, orig_w = original.shape[:2]
 
-    enhanced = ai_upscale(
-        image=original,
-        model_name=ai_model,
-        tile_size=int(tile_size),
-        face_restoration=face_restoration,
-    )
+    current = original
+
+    # Step 0: Old photo classical restoration (denoise and sharpen)
+    if old_photo_mode:
+        current = restore_old_photo(current)
+
+    passes = max(1, min(int(passes), 3))
+
+    for p in range(passes):
+        is_final_pass = (p == passes - 1)
+        logger.info(f"Executing enhancement pass {p + 1}/{passes} (is_final={is_final_pass})")
+
+        # Step 1: Restormer deblur
+        if restoration_task and restoration_task != "None":
+            logger.info(f"Running Restormer restoration ({restoration_task}) in pass {p + 1}")
+            current = restore_image(
+                image=current,
+                task=restoration_task,
+                tile_size=512,
+            )
+
+        if not is_final_pass:
+            # Intermediate pass: Upscale without face restoration to reconstruct micro-textures
+            intermediate = ai_upscale(
+                image=current,
+                model_name=ai_model,
+                tile_size=int(tile_size),
+                face_restoration=False,
+            )
+            # Downscale back to original resolution with anti-aliasing to bake in sharper edge priors & textures
+            current = cv2.resize(intermediate, (orig_w, orig_h), interpolation=cv2.INTER_AREA)
+        else:
+            # Final pass: Full AI upscaling with optional GFPGAN face restoration
+            current = ai_upscale(
+                image=current,
+                model_name=ai_model,
+                tile_size=int(tile_size),
+                face_restoration=face_restoration,
+                skin_smoothing=skin_smoothing,
+                preserve_colors=preserve_colors,
+            )
 
     enhanced = apply_gentle_finishing(
-        image=enhanced,
+        image=current,
         sharpening_strength=sharpening_strength,
         saturation_adjustment=saturation_adjustment,
     )
@@ -199,7 +267,10 @@ def process_and_save(
 ### AI Processing Information
 
 **AI model:** {ai_model}  
+**Enhancement Passes:** {passes}  
 **Face Restoration:** {"Enabled" if face_restoration else "Disabled"}
+**Photo Restoration:** {restoration_task}  
+**Old Photo Mode:** {"Enabled" if old_photo_mode else "Disabled"}  
 **Processing device:** {device}  
 **Tile size:** {tile_size}
 
@@ -229,12 +300,18 @@ def process_batch(
     output_ppi: int,
     jpeg_quality: int,
     face_restoration: bool = False,
+    skin_smoothing: float = 0.2,
+    preserve_colors: bool = True,
+    restoration_task: str = "None",
+    old_photo_mode: bool = False,
+    passes: int = 1,
 ) -> tuple[str, str]:
     logger.info(f"Starting batch processing of {len(image_paths) if image_paths else 0} images.")
     if not image_paths:
         raise ValueError("No images uploaded for batch processing.")
 
     processed_files = []
+    passes = max(1, min(int(passes), 3))
     
     for idx, path in enumerate(image_paths):
         logger.info(f"Processing image {idx + 1}/{len(image_paths)}: {path}")
@@ -245,14 +322,44 @@ def process_batch(
             
             # Process using core functions
             original = validate_image(img_np)
-            enhanced = ai_upscale(
-                image=original,
-                model_name=ai_model,
-                tile_size=int(tile_size),
-                face_restoration=face_restoration,
-            )
+            orig_h, orig_w = original.shape[:2]
+            current = original
+
+            # Step 0: Old photo classical restoration
+            if old_photo_mode:
+                current = restore_old_photo(current)
+
+            for p in range(passes):
+                is_final_pass = (p == passes - 1)
+
+                # Step 1: Restormer pre-processing
+                if restoration_task and restoration_task != "None":
+                    current = restore_image(
+                        image=current,
+                        task=restoration_task,
+                        tile_size=512,
+                    )
+
+                if not is_final_pass:
+                    intermediate = ai_upscale(
+                        image=current,
+                        model_name=ai_model,
+                        tile_size=int(tile_size),
+                        face_restoration=False,
+                    )
+                    current = cv2.resize(intermediate, (orig_w, orig_h), interpolation=cv2.INTER_AREA)
+                else:
+                    current = ai_upscale(
+                        image=current,
+                        model_name=ai_model,
+                        tile_size=int(tile_size),
+                        face_restoration=face_restoration,
+                        skin_smoothing=skin_smoothing,
+                        preserve_colors=preserve_colors,
+                    )
+
             enhanced = apply_gentle_finishing(
-                image=enhanced,
+                image=current,
                 sharpening_strength=sharpening_strength,
                 saturation_adjustment=saturation_adjustment,
             )
@@ -284,7 +391,7 @@ def process_batch(
             zipf.write(output_path, arcname)
 
     info = f"Successfully processed {len(processed_files)} out of {len(image_paths)} images.\n"
-    info += f"Model: {ai_model} | Face Restoration: {face_restoration}\n"
+    info += f"Model: {ai_model} | Passes: {passes} | Face Restoration: {face_restoration}\n"
     info += "Batch ZIP file is ready for download."
     
     logger.info("Batch processing completed.")

@@ -17,11 +17,16 @@ function App() {
   // Settings State
   const [model, setModel] = useState('RealESRGAN x2');
   const [faceRestoration, setFaceRestoration] = useState(false);
+  const [skinSmoothing, setSkinSmoothing] = useState('0.2');
+  const [preserveColors, setPreserveColors] = useState(true);
   const [tileSize, setTileSize] = useState('256');
   const [sharpening, setSharpening] = useState('0');
   const [saturation, setSaturation] = useState('0');
   const [ppi, setPpi] = useState('300');
-  const [jpegQuality, setJpegQuality] = useState('95');
+  const [jpegQuality] = useState('95');
+  const [restorationTask, setRestorationTask] = useState('None');
+  const [oldPhotoMode, setOldPhotoMode] = useState(false);
+  const [passes, setPasses] = useState('1');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const batchInputRef = useRef<HTMLInputElement>(null);
@@ -50,11 +55,16 @@ function App() {
     const formData = new FormData();
     formData.append('ai_model', model);
     formData.append('face_restoration', faceRestoration.toString());
+    formData.append('skin_smoothing', skinSmoothing);
+    formData.append('preserve_colors', preserveColors.toString());
     formData.append('tile_size', tileSize);
     formData.append('sharpening_strength', sharpening);
     formData.append('saturation_adjustment', saturation);
     formData.append('output_ppi', ppi);
     formData.append('jpeg_quality', jpegQuality);
+    formData.append('restoration_task', restorationTask);
+    formData.append('old_photo_mode', oldPhotoMode.toString());
+    formData.append('passes', passes);
 
     try {
       let response;
@@ -221,12 +231,62 @@ function App() {
             </select>
           </div>
 
+          <div className="setting-group">
+            <label>Photo Restoration <span className="info-text">Old photos</span></label>
+            <select value={restorationTask} onChange={e => setRestorationTask(e.target.value)}>
+              <option value="None">None (Skip)</option>
+              <option value="Motion_Deblurring">Motion Deblurring</option>
+              <option value="Single_Image_Defocus_Deblurring">Defocus Deblurring</option>
+            </select>
+          </div>
+
+          <div className="setting-group">
+            <label>Refinement Passes <span className="info-text">Reconstruct Details</span></label>
+            <select value={passes} onChange={e => setPasses(e.target.value)}>
+              <option value="1">1 Pass (Standard)</option>
+              <option value="2">2 Passes (Deep Detail)</option>
+              <option value="3">3 Passes (Ultra Detail)</option>
+            </select>
+          </div>
+
+          <div className="setting-group checkbox">
+            <label>Preserve Original Colors</label>
+            <input
+              type="checkbox"
+              checked={preserveColors}
+              onChange={e => setPreserveColors(e.target.checked)}
+              disabled={!faceRestoration}
+            />
+          </div>
+
           <div className="setting-group checkbox">
             <label>GFPGAN Face Restoration</label>
             <input 
               type="checkbox" 
               checked={faceRestoration}
               onChange={e => setFaceRestoration(e.target.checked)}
+            />
+          </div>
+
+          <div className="setting-group">
+            <label>Skin Smoothing: {skinSmoothing}</label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={skinSmoothing}
+              onChange={e => setSkinSmoothing(e.target.value)}
+              disabled={!faceRestoration}
+            />
+          </div>
+
+          <div className="setting-group checkbox">
+            <label>🕰️ Old Photo Mode <span className="info-text">Denoise + Sharpen</span></label>
+            <input 
+              type="checkbox" 
+              checked={oldPhotoMode}
+              onChange={e => setOldPhotoMode(e.target.checked)}
             />
           </div>
 
