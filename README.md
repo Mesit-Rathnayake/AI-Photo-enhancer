@@ -4,9 +4,9 @@
 
 **Restore the detail. Keep the memory.**
 
-AI Photo Enhancer is a local-first restoration workspace for bringing new clarity to old portraits, scanned photographs, and low-quality images without forcing them into an artificial modern look.
+AI Photo Enhancer is a portfolio project exploring how modern computer-vision models can be composed into a practical, human-centered image restoration product. It brings clarity to old portraits, scanned photographs, and low-quality images without forcing them into an artificial modern look.
 
-It combines a FastAPI backend with a Vite + React frontend and a carefully constrained Real-ESRGAN, Restormer, and GFPGAN pipeline. Your images stay on your machine while you improve resolution, recover facial detail, and export print-ready results.
+The project demonstrates full-stack product thinking: a React interface, a typed API boundary, an image-processing orchestration layer, model adapters, classical computer-vision finishing, and local-first privacy. The result is a focused restoration workflow that is explainable, tunable, and usable on a workstation.
 
 ## Highlights
 
@@ -19,26 +19,58 @@ It combines a FastAPI backend with a Vite + React frontend and a carefully const
 - Batch processing for multiple images
 - JPEG export with configurable PPI and quality settings
 
-## Product launch
+## Portfolio overview
 
-AI Photo Enhancer is built for people restoring family archives, scanned albums, and portrait collections. Its guiding principle is simple: recover believable detail while preserving the character, colors, and texture of the original photograph.
+This project was designed as a complete product rather than a model demo. It turns several specialized restoration systems into one coherent workflow for family archives, scanned albums, and portrait collections.
 
-The current release focuses on portraits and face restoration. It does not attempt aggressive full-body or clothing reconstruction, because constrained enhancement produces more natural results for the image collection this project targets.
+The guiding engineering decision is restraint: recover believable detail while preserving the character, colors, and texture of the source. The current release focuses on portraits and face restoration instead of aggressive full-body or clothing reconstruction, because constrained enhancement produces more natural results for this image family.
+
+### Skills demonstrated
+
+- Full-stack application architecture with React, FastAPI, and Python
+- AI model integration across Real-ESRGAN, Restormer, and GFPGAN
+- Image-processing pipelines with OpenCV, NumPy, and Pillow
+- Multipart upload and batch ZIP workflows
+- Resource-aware inference using configurable tile sizes
+- Face-region post-processing and color-preservation strategies
+- Responsive interface design with before-and-after visual comparison
+- Defensive validation, error handling, logging, and export metadata
 
 ## Privacy by design
 
 The application runs locally. Images are uploaded only to the local FastAPI service running on your computer, processed there, and written to the local `outputs/` directory. Model weights, generated files, virtual environments, caches, and local test fixtures are excluded from version control.
 
-## Current workflow
+## Architecture
 
-The app is intentionally optimized for a face-focused restoration pipeline rather than aggressive full-body reconstruction. In practice, the best results come from:
+The application is organized into four layers:
 
-- enabling face restoration for portraits
-- using mild skin smoothing to reduce wrinkle emphasis
-- preserving original colors to avoid unnatural face tinting
-- keeping the rest of the image natural instead of over-restoring clothing or body details
+1. **Presentation layer**: React and TypeScript manage uploads, settings, processing state, errors, and the before/after comparison view.
+2. **API layer**: FastAPI exposes single-image and batch endpoints, validates multipart inputs, and returns JPEG or ZIP responses.
+3. **Processing layer**: the orchestration service coordinates optional old-photo cleanup, Restormer deblurring, AI upscaling, face restoration, finishing, and export.
+4. **Model layer**: dedicated adapters isolate Real-ESRGAN, GFPGAN, and Restormer loading and inference details from the application workflow.
 
-This makes the tool especially effective for older portrait photos where the face should look restored without becoming plastic or over-processed.
+```mermaid
+flowchart LR
+	A[React + TypeScript UI] --> B[FastAPI upload endpoints]
+	B --> C[Image validation]
+	C --> D{Old photo mode}
+	D -->|enabled| E[Classical denoise + sharpen]
+	D -->|disabled| F[Restormer deblur]
+	E --> F
+	F --> G[Real-ESRGAN upscale]
+	G --> H{Face restoration}
+	H -->|enabled| I[GFPGAN + skin smoothing + color blend]
+	H -->|disabled| J[Preserve AI output]
+	I --> K[Finishing + PPI/JPEG export]
+	J --> K
+	K --> L[JPEG or batch ZIP response]
+```
+
+### Processing pipeline
+
+The final enhancement pass applies face restoration only when requested. Optional intermediate passes upscale and downscale the image to reinforce textures without repeatedly altering facial identity. Restormer is used as a task-specific restoration stage, while classical OpenCV processing handles gentle old-photo cleanup.
+
+Face processing is deliberately localized. GFPGAN reconstructs facial structure, skin smoothing softens excessive wrinkle emphasis inside detected faces, and color preservation blends the result toward the original palette. This keeps clothing, background texture, and the overall photographic character natural.
 
 ## Tech stack
 
@@ -59,13 +91,12 @@ Hybrid-Photo-Enhancer/
 │   │   └── restormer.py
 │   └── processing/
 │       └── classical_enhancer.py
-├── models/                   # downloaded model weights
-├── gfpgan/weights/           # GFPGAN weights
-├── outputs/                  # generated enhanced images and ZIP exports
-├── requirements.txt
-├── README.md
-└── .venv/                    # local Python environment
+├── requirements.txt          # Python dependencies
+├── README.md                 # Portfolio and architecture documentation
+└── outputs/                  # generated files, excluded from Git
 ```
+
+Model weights, generated outputs, environments, caches, and personal test images are intentionally excluded from the public repository.
 
 ## Features in detail
 
@@ -109,64 +140,6 @@ The app supports:
 - JPEG quality
 - GPU tile size selection
 
-## Local setup
-
-### Prerequisites
-
-- Python 3.10+
-- Node.js 18+
-- Windows, macOS, or Linux
-- Optional: NVIDIA GPU for faster processing
-
-### 1. Clone and create the environment
-
-```bash
-git clone https://github.com/Mesit-Rathnayake/AI-Photo-enhancer.git
-cd AI-Photo-enhancer
-
-python -m venv .venv
-
-# Windows
-.venv\Scripts\activate
-
-# macOS / Linux
-source .venv/bin/activate
-```
-
-### 2. Install Python dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Install frontend dependencies
-
-```bash
-cd frontend
-npm install
-cd ..
-```
-
-### 4. Start the backend
-
-```bash
-uvicorn api:app --host 127.0.0.1 --port 8000
-```
-
-### 5. Start the frontend
-
-In a second terminal:
-
-```bash
-cd frontend
-npm run dev
-```
-
-Then open:
-
-- Frontend: http://localhost:5173
-- API docs: http://localhost:8000/docs
-
 ## API endpoints
 
 The backend exposes two multipart upload endpoints:
@@ -174,7 +147,7 @@ The backend exposes two multipart upload endpoints:
 - `POST /api/enhance/single` for one image
 - `POST /api/enhance/batch` for multiple images and a ZIP result
 
-Interactive OpenAPI documentation is available at `http://localhost:8000/docs` while the backend is running.
+The API boundary keeps transport concerns separate from processing concerns. Interactive OpenAPI documentation is available at `/docs` when the local service is running.
 
 ## Model notes
 
@@ -185,24 +158,22 @@ This project relies on pretrained weights for the enhancement models. The reposi
 
 If a required weight file is missing, the app may attempt to fetch or rely on a local model path during processing. The exact behavior depends on the model loader and your local environment.
 
-## Common usage tips
+## Engineering considerations
 
-- Start with `RealESRGAN x2` for a safer default.
-- Enable face restoration for portrait images.
-- Keep skin smoothing modest unless you want a more polished face finish.
-- Keep color preservation on for old portraits and archival images.
-- Use older photo mode for scanned, faded, or paper-texture images.
+- **Natural results over maximum alteration:** face restoration is opt-in and localized.
+- **Hardware flexibility:** tile size controls memory use, making inference more practical across different GPUs.
+- **Failure containment:** image validation, HTTP errors, logging, and batch-level exception handling keep one failed image from hiding the result of an entire batch.
+- **Output fidelity:** PPI, JPEG quality, dimensions, and print-size metadata are preserved in the export workflow.
+- **Privacy:** images are processed by a local service and are not sent to a third-party hosted API.
 
-## Development notes
+## Validation
 
-This app is intended for local running and experimentation. It is not a cloud-hosted SaaS product. The code is structured so it can be tested and tuned on a workstation GPU or CPU, depending on the available hardware.
-
-Before opening a public pull request:
+The project has been checked with:
 
 - run `python -m compileall api.py app.py src`
 - run `npm run build` from `frontend/`
+- run `npm run lint` from `frontend/`
 - confirm no model weights, generated outputs, personal images, or local environment files are staged
-- review third-party model licenses before distributing builds
 
 ## License
 
