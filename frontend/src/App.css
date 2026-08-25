@@ -118,16 +118,73 @@
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
+  position: sticky;
+  top: 1.5rem;
+  min-height: min(620px, calc(100vh - 3rem));
+  box-sizing: border-box;
+}
+
+.settings-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .settings-panel h3 {
+  margin: 0;
   margin-bottom: 0.5rem;
-  border-bottom: 1px solid var(--panel-border);
   padding-bottom: 0.5rem;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.settings-status {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.settings-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  padding: 0.3rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.settings-tab {
+  min-height: 2.5rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.settings-tab:hover,
+.settings-tab.active {
+  color: var(--text-primary);
+  border-color: var(--panel-border);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
 }
 
 .setting-group {
@@ -160,10 +217,19 @@
 }
 
 .action-area {
-  margin-top: 2rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--panel-border);
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+@media (max-width: 968px) {
+  .settings-panel {
+    position: static;
+    min-height: 0;
+  }
 }
 
 .error-banner {
