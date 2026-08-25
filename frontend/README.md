@@ -1,6 +1,35 @@
-# React + TypeScript + Vite
+# AI Photo Enhancer Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+This directory contains the React and TypeScript frontend for AI Photo Enhancer. It provides the upload workspace, single-image comparison view, batch processing controls, and restoration settings that connect to the local FastAPI backend.
+
+## Development
+
+From this directory:
+
+```bash
+npm install
+npm run dev
+```
+
+The Vite development server runs at `http://localhost:5173` and expects the backend at `http://localhost:8000`.
+
+## Production build
+
+```bash
+npm run build
+```
+
+The generated `dist/` directory is a local build artifact and is excluded from version control.
+
+## Linting
+
+```bash
+npm run lint
+```
+
+## Technical notes
+
+The frontend uses React, TypeScript, Vite, Lucide icons, and Oxlint. The React Compiler is currently not enabled.
 
 Currently, two official plugins are available:
 

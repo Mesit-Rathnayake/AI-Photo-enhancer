@@ -11,3 +11,5 @@ gfpgan
 fastapi
 uvicorn
 python-multipart
+natsort
+scikit-image

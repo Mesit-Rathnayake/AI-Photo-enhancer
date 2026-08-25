@@ -14,9 +14,17 @@ frontend/dist/
 # Outputs
 outputs/
 test outs/
-models/
+/models/
 gfpgan/weights/
 *.pth
+
+# Local test fixtures
+/tests/
+
+# Local configuration
+.env
+.env.*
+!.env.example
 
 # Python
 __pycache__/
