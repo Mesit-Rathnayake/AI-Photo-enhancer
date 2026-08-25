@@ -16,6 +16,10 @@ The project demonstrates full-stack product thinking: a React interface, a typed
 - Old-photo cleanup mode with color-preserving enhancement
 - Optional skin smoothing for face cleanup
 - Optional preservation of original colors during face reconstruction
+- Digital 2x quality recovery for noise and softness from phone zoom
+- Conservative 1x lens distortion correction with source dimensions preserved
+- Stronger wide-angle portrait correction for fisheye and edge stretching
+- Radial lens-distortion correction that preserves subject proportions
 - Batch processing for multiple images
 - JPEG export with configurable PPI and quality settings
 
@@ -110,6 +114,17 @@ Choose from:
 
 These are used to increase image resolution while trying to preserve detail and natural texture.
 
+### Camera-aware correction
+
+The workflow addresses two common limitations of mid-range phone cameras:
+
+- **Digital 2x quality recovery:** applies restrained denoising and detail recovery before AI upscaling to reduce the softness and noise introduced when a phone crops into its 1x sensor instead of using optical zoom.
+- **1x lens correction:** applies a mild barrel-distortion correction to wide-angle 1x captures while keeping the original pixel dimensions and avoiding additional sharpening or enlargement.
+- **Wide-angle portrait correction:** applies a stronger radial correction for close portraits with fisheye-like faces or an exaggerated foreground body. It preserves output dimensions, but the best result still depends on how centered the subject is and how much of the frame is available for correction.
+- **Radial lens-distortion correction:** applies a global radial correction based on distance from the optical center. It corrects bent lines and edge stretching without applying body-slimming or vertical compression.
+
+These are separate capture modes so the user can choose whether the input needs quality recovery or geometry correction, rather than applying both transformations blindly.
+
 ### Face restoration
 
 When enabled, the app applies GFPGAN face enhancement to improve facial structure and detail. This works best on portraits and degraded face crops.
@@ -162,6 +177,9 @@ If a required weight file is missing, the app may attempt to fetch or rely on a 
 
 - **Natural results over maximum alteration:** face restoration is opt-in and localized.
 - **Hardware flexibility:** tile size controls memory use, making inference more practical across different GPUs.
+- **Camera-aware processing:** digital zoom quality recovery and 1x lens correction are explicit, opt-in stages with different goals.
+- **Honest correction boundaries:** lens correction can reduce optical and perspective exaggeration, but it cannot recreate a telephoto viewpoint or fully undo a subject photographed too close with a wide lens.
+- **Proportion-safe correction:** radial correction leaves the subject proportions untouched; it cannot recreate the viewpoint of a longer lens or undo perspective caused by standing too close to a wide lens.
 - **Failure containment:** image validation, HTTP errors, logging, and batch-level exception handling keep one failed image from hiding the result of an entire batch.
 - **Output fidelity:** PPI, JPEG quality, dimensions, and print-size metadata are preserved in the export workflow.
 - **Privacy:** images are processed by a local service and are not sent to a third-party hosted API.

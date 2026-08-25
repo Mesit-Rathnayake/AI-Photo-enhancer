@@ -115,6 +115,23 @@ with gr.Blocks(
         with gr.Column():
             gr.Markdown("#### AI Engine Options")
 
+            capture_mode = gr.Dropdown(
+                choices=[
+                    "Standard",
+                    "Digital 2x Quality Recovery",
+                    "1x Lens Correction",
+                    "Wide-angle Portrait Correction",
+                    "Radial Lens Distortion Correction",
+                ],
+                value="Standard",
+                label="Camera Correction",
+                info=(
+                    "Use Digital 2x Quality Recovery for digital zoom softness. "
+                    "Use Wide-angle Portrait Correction for strong fisheye or edge stretching. "
+                    "Use Radial Lens Distortion Correction to correct lens bending without slimming the subject."
+                ),
+            )
+
             ai_model = gr.Radio(
                 choices=[
                     "RealESRGAN x2",
@@ -209,6 +226,7 @@ with gr.Blocks(
             face_restoration,
             skin_smoothing,
             preserve_colors,
+            capture_mode,
         ],
         outputs=[
             output_image,

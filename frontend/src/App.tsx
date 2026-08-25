@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Upload, ImageIcon, Layers, Zap, Sliders, Download, Sparkles, FolderUp, AlertTriangle, X } from 'lucide-react';
 import './App.css';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://127.0.0.1:8000';
 
 function App() {
   const [tab, setTab] = useState<'single' | 'batch'>('single');
@@ -27,6 +27,7 @@ function App() {
   const [restorationTask, setRestorationTask] = useState('None');
   const [oldPhotoMode, setOldPhotoMode] = useState(false);
   const [passes, setPasses] = useState('1');
+  const [captureMode, setCaptureMode] = useState('Standard');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const batchInputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +66,7 @@ function App() {
     formData.append('restoration_task', restorationTask);
     formData.append('old_photo_mode', oldPhotoMode.toString());
     formData.append('passes', passes);
+    formData.append('capture_mode', captureMode);
 
     try {
       let response;
@@ -228,6 +230,17 @@ function App() {
               <option value="RealESRGAN x2">RealESRGAN x2 (Balanced)</option>
               <option value="RealESRGAN x4">RealESRGAN x4 (Max Detail)</option>
               <option value="RealESRGAN Anime x4">Anime x4 (Illustrations)</option>
+            </select>
+          </div>
+
+          <div className="setting-group">
+            <label>Camera Correction <span className="info-text">Choose by capture type</span></label>
+            <select value={captureMode} onChange={e => setCaptureMode(e.target.value)}>
+              <option value="Standard">Standard processing</option>
+              <option value="Digital 2x Quality Recovery">Digital 2x quality recovery</option>
+              <option value="1x Lens Correction">1x lens correction</option>
+              <option value="Wide-angle Portrait Correction">Wide-angle portrait correction</option>
+              <option value="Radial Lens Distortion Correction">Radial lens distortion correction</option>
             </select>
           </div>
 

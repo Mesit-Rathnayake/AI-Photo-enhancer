@@ -21,7 +21,12 @@ app = FastAPI(title="AI Photo Enhancer API")
 # Allow Vite frontend to communicate
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,6 +48,7 @@ async def enhance_single(
     restoration_task: str = Form("None"),
     old_photo_mode: bool = Form(False),
     passes: int = Form(1),
+    capture_mode: str = Form("Standard"),
 ):
     try:
         # Read image to numpy array
@@ -73,6 +79,7 @@ async def enhance_single(
             restoration_task=restoration_task,
             old_photo_mode=old_photo_mode,
             passes=passes,
+            capture_mode=capture_mode,
         )
         
         # Verify the file was created
@@ -105,6 +112,7 @@ async def enhance_batch(
     restoration_task: str = Form("None"),
     old_photo_mode: bool = Form(False),
     passes: int = Form(1),
+    capture_mode: str = Form("Standard"),
 ):
     if not images:
         raise HTTPException(status_code=400, detail="No images provided.")
@@ -137,6 +145,7 @@ async def enhance_batch(
             restoration_task=restoration_task,
             old_photo_mode=old_photo_mode,
             passes=passes,
+            capture_mode=capture_mode,
         )
         
         if not os.path.exists(zip_path):

@@ -148,30 +148,73 @@ def save_image_with_ppi(
     return str(output_path.resolve())
 
 
-def restore_old_photo(
+def correct_one_x_lens_distortion(image: np.ndarray) -> np.ndarray:
+    """Apply a mild barrel correction while preserving source dimensions."""
+    logger.info("Applying conservative 1x lens distortion correction")
+    height, width = image.shape[:2]
+    focal_length = float(max(width, height))
+    camera_matrix = np.array(
+        [
+            [focal_length, 0, width / 2],
+            [0, focal_length, height / 2],
+            [0, 0, 1],
+        ],
+        dtype=np.float32,
+    )
+    distortion = np.array([-0.08, 0.015, 0, 0, 0], dtype=np.float32)
+    return cv2.undistort(image, camera_matrix, distortion)
+
+
+def correct_wide_angle_portrait(image: np.ndarray) -> np.ndarray:
+    """Correct pronounced radial stretching while keeping source dimensions."""
+    logger.info("Applying wide-angle portrait correction")
+    height, width = image.shape[:2]
+    focal_length = float(max(width, height))
+    camera_matrix = np.array(
+        [
+            [focal_length, 0, width / 2],
+            [0, focal_length, height / 2],
+            [0, 0, 1],
+        ],
+        dtype=np.float32,
+    )
+    distortion = np.array([-0.22, 0.045, 0, 0, 0], dtype=np.float32)
+    return cv2.undistort(image, camera_matrix, distortion)
+
+
+def correct_radial_portrait_distortion(image: np.ndarray) -> np.ndarray:
+    """Correct radial distortion without applying subject slimming."""
+    logger.info("Applying radial portrait lens-distortion correction")
+    height, width = image.shape[:2]
+    focal_length = float(max(width, height))
+    camera_matrix = np.array(
+        [
+            [focal_length, 0, width / 2],
+            [0, focal_length, height / 2],
+            [0, 0, 1],
+        ],
+        dtype=np.float32,
+    )
+    distortion = np.array([-0.16, 0.025, 0, 0, 0], dtype=np.float32)
+    return cv2.undistort(image, camera_matrix, distortion)
+
+
+def apply_capture_correction(
     image: np.ndarray,
+    capture_mode: str,
 ) -> np.ndarray:
-    """
-    Quality-only restoration for old photographs.
-    Preserves original colors — only reduces noise and recovers sharpness.
-
-    Pipeline:
-    1. Bilateral filter (edge-preserving noise/grain reduction)
-    2. Unsharp mask (recover fine detail in clothes, textures, background)
-    """
-    logger.info("Applying old photo quality restoration (color-preserving)")
-    result = image.copy()
-
-    # --- 1. Edge-preserving denoising ---
-    result = cv2.bilateralFilter(result, d=9, sigmaColor=75, sigmaSpace=75)
-
-    # --- 2. Unsharp mask for detail recovery ---
-    blurred = cv2.GaussianBlur(result, (0, 0), sigmaX=2.0)
-    result = cv2.addWeighted(result, 1.3, blurred, -0.3, 0)
-    result = np.clip(result, 0, 255).astype(np.uint8)
-
-    logger.info("Old photo quality restoration complete")
-    return result
+    if capture_mode == "Digital 2x Quality Recovery":
+        return recover_digital_zoom_quality(image)
+    if capture_mode == "1x Lens Correction":
+        return correct_one_x_lens_distortion(image)
+    if capture_mode == "Wide-angle Portrait Correction":
+        return correct_wide_angle_portrait(image)
+    if capture_mode in {
+        "Portrait Perspective Correction",
+        "Radial Lens Distortion Correction",
+    }:
+        return correct_radial_portrait_distortion(image)
+    return image
 
 
 def process_and_save(
@@ -185,15 +228,18 @@ def process_and_save(
     face_restoration: bool = False,
     skin_smoothing: float = 0.2,
     preserve_colors: bool = True,
+    capture_mode: str = "Standard",
     restoration_task: str = "None",
     old_photo_mode: bool = False,
     passes: int = 1,
 ) -> tuple[np.ndarray, str, str]:
-    logger.info(f"Starting single image processing with model {ai_model}, face_restoration={face_restoration}, restoration_task={restoration_task}, old_photo_mode={old_photo_mode}, passes={passes}")
+    logger.info(f"Starting single image processing with model {ai_model}, capture_mode={capture_mode}, face_restoration={face_restoration}, restoration_task={restoration_task}, old_photo_mode={old_photo_mode}, passes={passes}")
     original = validate_image(image)
     orig_h, orig_w = original.shape[:2]
 
     current = original
+
+    current = apply_capture_correction(current, capture_mode)
 
     # Step 0: Old photo classical restoration (denoise and sharpen)
     if old_photo_mode:
@@ -267,6 +313,7 @@ def process_and_save(
 ### AI Processing Information
 
 **AI model:** {ai_model}  
+**Capture correction:** {capture_mode}
 **Enhancement Passes:** {passes}  
 **Face Restoration:** {"Enabled" if face_restoration else "Disabled"}
 **Photo Restoration:** {restoration_task}  
@@ -302,11 +349,12 @@ def process_batch(
     face_restoration: bool = False,
     skin_smoothing: float = 0.2,
     preserve_colors: bool = True,
+    capture_mode: str = "Standard",
     restoration_task: str = "None",
     old_photo_mode: bool = False,
     passes: int = 1,
 ) -> tuple[str, str]:
-    logger.info(f"Starting batch processing of {len(image_paths) if image_paths else 0} images.")
+    logger.info(f"Starting batch processing of {len(image_paths) if image_paths else 0} images with capture_mode={capture_mode}.")
     if not image_paths:
         raise ValueError("No images uploaded for batch processing.")
 
@@ -324,6 +372,8 @@ def process_batch(
             original = validate_image(img_np)
             orig_h, orig_w = original.shape[:2]
             current = original
+
+            current = apply_capture_correction(current, capture_mode)
 
             # Step 0: Old photo classical restoration
             if old_photo_mode:
