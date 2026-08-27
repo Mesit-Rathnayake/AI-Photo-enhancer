@@ -53,6 +53,16 @@ The application is organized into four layers:
 3. **Processing layer**: the orchestration service coordinates optional old-photo cleanup, Restormer deblurring, AI upscaling, face restoration, finishing, and export.
 4. **Model layer**: dedicated adapters isolate Real-ESRGAN, GFPGAN, and Restormer loading and inference details from the application workflow.
 
+## Run locally
+
+Start the complete application with one command from the repository root:
+
+```powershell
+.\start-app.ps1
+```
+
+This starts any missing backend or frontend service, reuses services that are already healthy, waits for both to respond, and opens `http://localhost:5173/`. You can also double-click `start-app.bat` from Windows Explorer.
+
 ```mermaid
 flowchart LR
 	A[React + TypeScript UI] --> B[FastAPI upload endpoints]

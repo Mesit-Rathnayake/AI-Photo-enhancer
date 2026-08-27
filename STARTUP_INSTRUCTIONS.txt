@@ -1,0 +1,32 @@
+AI PHOTO ENHANCER - STARTUP INSTRUCTIONS
+========================================
+
+1. Open PowerShell in the project folder:
+
+   D:\My Projects\Hybrid-Photo-Enhancer
+
+2. Run this one command:
+
+   .\start-app.ps1
+
+The launcher will:
+- Start the FastAPI backend if it is not already running.
+- Start the React/Vite frontend if it is not already running.
+- Reuse services that are already healthy.
+- Wait until both services are ready.
+- Open the application in your browser.
+
+Application:
+http://localhost:5173/
+
+Backend API documentation:
+http://localhost:8000/docs
+
+Alternative:
+You can double-click start-app.bat in Windows Explorer to start the application without typing a command.
+
+Troubleshooting:
+- Keep the backend and frontend PowerShell windows open while using the app.
+- If startup fails, check those two windows for error messages.
+- The Python environment must exist at .venv\Scripts\python.exe.
+- Frontend dependencies must be installed in frontend\node_modules.
