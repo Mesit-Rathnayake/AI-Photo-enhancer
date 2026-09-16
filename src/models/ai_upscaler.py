@@ -142,7 +142,7 @@ def create_upscaler(
 
 
 def get_face_enhancer(
-    upscaler: RealESRGANer,
+    upscaler: RealESRGANer | None = None,
 ) -> GFPGANer | None:
     if not HAS_GFPGAN:
         return None
@@ -161,7 +161,7 @@ def get_face_enhancer(
 
     face_enhancer = GFPGANer(
         model_path=str(model_path),
-        upscale=upscaler.scale,
+        upscale=upscaler.scale if upscaler is not None else 1,
         arch="clean",
         channel_multiplier=2,
         bg_upsampler=upscaler,
@@ -237,9 +237,7 @@ def ai_upscale(
 ) -> np.ndarray:
     """
     Upscale an RGB NumPy image using Real-ESRGAN, with optional GFPGAN face restoration.
-
-    RealESRGANer expects OpenCV BGR input, so conversion is required before
-    and after inference.
+    If model_name is None / Skip, retains native resolution while supporting optional face restoration.
     """
     if image is None:
         raise ValueError("No image was supplied for AI upscaling.")
@@ -249,6 +247,29 @@ def ai_upscale(
 
     if image.ndim != 3 or image.shape[2] != 3:
         raise ValueError("The AI upscaler requires an RGB image.")
+
+    is_skip_upscale = model_name in ("None", "None (Skip)", "none", "Skip")
+
+    if is_skip_upscale:
+        if not face_restoration:
+            return image.copy()
+        face_enhancer = get_face_enhancer(None)
+        if face_enhancer is None:
+            raise RuntimeError("Face restoration requested but GFPGAN could not be loaded.")
+        
+        bgr_image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        _, _, output_bgr = face_enhancer.enhance(
+            bgr_image,
+            has_aligned=False,
+            only_center_face=False,
+            paste_back=True,
+            weight=0.75,
+        )
+        output_rgb = cv2.cvtColor(output_bgr, cv2.COLOR_BGR2RGB)
+        if preserve_colors:
+            output_rgb = preserve_original_colors(output_rgb, image)
+        output_rgb = soften_face_wrinkles(output_rgb, skin_smoothing)
+        return output_rgb
 
     upscaler = create_upscaler(
         model_name=model_name,

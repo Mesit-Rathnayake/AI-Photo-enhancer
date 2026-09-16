@@ -426,9 +426,10 @@ function App() {
                     value={model}
                     onChange={(event) => setModel(event.target.value)}
                   >
-                    <option>RealESRGAN x2</option>
-                    <option>RealESRGAN x4</option>
-                    <option>RealESRGAN Anime x4</option>
+                    <option value="RealESRGAN x2">RealESRGAN x2 (2× Upscale)</option>
+                    <option value="RealESRGAN x4">RealESRGAN x4 (4× Deep Detail)</option>
+                    <option value="RealESRGAN Anime x4">RealESRGAN Anime x4 (Art / Illustration)</option>
+                    <option value="None">None (Skip Upscaling - Keep Original Resolution)</option>
                   </select>
                 </div>
 
@@ -442,11 +443,9 @@ function App() {
                     value={captureMode}
                     onChange={(event) => setCaptureMode(event.target.value)}
                   >
-                    <option>Standard</option>
-                    <option>Digital 2x Quality Recovery</option>
-                    <option>1x Lens Correction</option>
-                    <option>Wide-angle Portrait Correction</option>
-                    <option>Radial Lens Distortion Correction</option>
+                    <option value="Standard">None (Skip Distortion Correction)</option>
+                    <option value="Wide-angle Distortion Correction">Wide-angle Distortion Correction (24mm Barrel Fix)</option>
+                    <option value="Digital 2x Quality Recovery">Digital 2x Quality Recovery (Noise &amp; Softness Fix)</option>
                   </select>
                 </div>
 
@@ -458,6 +457,7 @@ function App() {
                     id="passes-select"
                     value={passes}
                     onChange={(event) => setPasses(event.target.value)}
+                    disabled={model === 'None'}
                   >
                     <option value="1">1 Pass (Standard)</option>
                     <option value="2">2 Passes (Deep Detail)</option>
@@ -474,6 +474,7 @@ function App() {
                     id="tile-select"
                     value={tileSize}
                     onChange={(event) => setTileSize(event.target.value)}
+                    disabled={model === 'None'}
                   >
                     <option value="128">128 (Low VRAM)</option>
                     <option value="256">256 (Default)</option>
@@ -498,7 +499,7 @@ function App() {
                       setRestorationTask(event.target.value)
                     }
                   >
-                    <option value="None">None (Skip)</option>
+                    <option value="None">None (Skip Deblurring)</option>
                     <option value="Motion_Deblurring">
                       Motion Deblurring
                     </option>

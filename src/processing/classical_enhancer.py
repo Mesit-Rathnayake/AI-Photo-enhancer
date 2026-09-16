@@ -148,9 +148,32 @@ def save_image_with_ppi(
     return str(output_path.resolve())
 
 
-def correct_one_x_lens_distortion(image: np.ndarray) -> np.ndarray:
-    """Apply a mild barrel correction while preserving source dimensions."""
-    logger.info("Applying conservative 1x lens distortion correction")
+def restore_old_photo(image: np.ndarray) -> np.ndarray:
+    """Apply gentle classical denoising and contrast enhancement for worn or grainy photos."""
+    logger.info("Applying classical old photo restoration")
+    denoised = cv2.fastNlMeansDenoisingColored(
+        image, None, h=6, hColor=6, templateWindowSize=7, searchWindowSize=21
+    )
+    lab = cv2.cvtColor(denoised, cv2.COLOR_RGB2LAB)
+    l_channel, a_channel, b_channel = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
+    l_eq = clahe.apply(l_channel)
+    lab_eq = cv2.merge((l_eq, a_channel, b_channel))
+    return cv2.cvtColor(lab_eq, cv2.COLOR_LAB2RGB)
+
+
+def recover_digital_zoom_quality(image: np.ndarray) -> np.ndarray:
+    """Apply restrained bilateral filtering and subtle detail enhancement to recover digital zoom softness."""
+    logger.info("Applying digital 2x zoom quality recovery")
+    filtered = cv2.bilateralFilter(image, d=5, sigmaColor=25, sigmaSpace=25)
+    blurred = cv2.GaussianBlur(filtered, (0, 0), sigmaX=1.2)
+    sharpened = cv2.addWeighted(filtered, 1.25, blurred, -0.25, 0)
+    return np.clip(sharpened, 0, 255).astype(np.uint8)
+
+
+def correct_wide_angle_distortion(image: np.ndarray) -> np.ndarray:
+    """Apply radial lens correction to fix 24mm wide-angle barrel distortion and edge stretching."""
+    logger.info("Applying wide-angle lens distortion correction")
     height, width = image.shape[:2]
     focal_length = float(max(width, height))
     camera_matrix = np.array(
@@ -161,41 +184,7 @@ def correct_one_x_lens_distortion(image: np.ndarray) -> np.ndarray:
         ],
         dtype=np.float32,
     )
-    distortion = np.array([-0.08, 0.015, 0, 0, 0], dtype=np.float32)
-    return cv2.undistort(image, camera_matrix, distortion)
-
-
-def correct_wide_angle_portrait(image: np.ndarray) -> np.ndarray:
-    """Correct pronounced radial stretching while keeping source dimensions."""
-    logger.info("Applying wide-angle portrait correction")
-    height, width = image.shape[:2]
-    focal_length = float(max(width, height))
-    camera_matrix = np.array(
-        [
-            [focal_length, 0, width / 2],
-            [0, focal_length, height / 2],
-            [0, 0, 1],
-        ],
-        dtype=np.float32,
-    )
-    distortion = np.array([-0.22, 0.045, 0, 0, 0], dtype=np.float32)
-    return cv2.undistort(image, camera_matrix, distortion)
-
-
-def correct_radial_portrait_distortion(image: np.ndarray) -> np.ndarray:
-    """Correct radial distortion without applying subject slimming."""
-    logger.info("Applying radial portrait lens-distortion correction")
-    height, width = image.shape[:2]
-    focal_length = float(max(width, height))
-    camera_matrix = np.array(
-        [
-            [focal_length, 0, width / 2],
-            [0, focal_length, height / 2],
-            [0, 0, 1],
-        ],
-        dtype=np.float32,
-    )
-    distortion = np.array([-0.16, 0.025, 0, 0, 0], dtype=np.float32)
+    distortion = np.array([-0.18, 0.03, 0, 0, 0], dtype=np.float32)
     return cv2.undistort(image, camera_matrix, distortion)
 
 
@@ -203,17 +192,18 @@ def apply_capture_correction(
     image: np.ndarray,
     capture_mode: str,
 ) -> np.ndarray:
+    if capture_mode in ("None", "None (Skip)", "Standard", "none", "Skip"):
+        return image
     if capture_mode == "Digital 2x Quality Recovery":
         return recover_digital_zoom_quality(image)
-    if capture_mode == "1x Lens Correction":
-        return correct_one_x_lens_distortion(image)
-    if capture_mode == "Wide-angle Portrait Correction":
-        return correct_wide_angle_portrait(image)
-    if capture_mode in {
-        "Portrait Perspective Correction",
+    if capture_mode in (
+        "Wide-angle Distortion Correction",
+        "Wide-angle Portrait Correction",
+        "1x Lens Correction",
         "Radial Lens Distortion Correction",
-    }:
-        return correct_radial_portrait_distortion(image)
+        "Portrait Perspective Correction",
+    ):
+        return correct_wide_angle_distortion(image)
     return image
 
 
@@ -245,14 +235,15 @@ def process_and_save(
     if old_photo_mode:
         current = restore_old_photo(current)
 
-    passes = max(1, min(int(passes), 3))
+    is_skip_upscale = ai_model in ("None", "None (Skip)", "none", "Skip")
+    passes = 1 if is_skip_upscale else max(1, min(int(passes), 3))
 
     for p in range(passes):
         is_final_pass = (p == passes - 1)
         logger.info(f"Executing enhancement pass {p + 1}/{passes} (is_final={is_final_pass})")
 
         # Step 1: Restormer deblur
-        if restoration_task and restoration_task != "None":
+        if restoration_task and restoration_task not in ("None", "None (Skip)", "none", "Skip"):
             logger.info(f"Running Restormer restoration ({restoration_task}) in pass {p + 1}")
             current = restore_image(
                 image=current,
@@ -260,7 +251,7 @@ def process_and_save(
                 tile_size=512,
             )
 
-        if not is_final_pass:
+        if not is_final_pass and not is_skip_upscale:
             # Intermediate pass: Upscale without face restoration to reconstruct micro-textures
             intermediate = ai_upscale(
                 image=current,
@@ -271,7 +262,7 @@ def process_and_save(
             # Downscale back to original resolution with anti-aliasing to bake in sharper edge priors & textures
             current = cv2.resize(intermediate, (orig_w, orig_h), interpolation=cv2.INTER_AREA)
         else:
-            # Final pass: Full AI upscaling with optional GFPGAN face restoration
+            # Final pass: Full AI upscaling or direct resolution with optional GFPGAN face restoration
             current = ai_upscale(
                 image=current,
                 model_name=ai_model,
@@ -379,18 +370,21 @@ def process_batch(
             if old_photo_mode:
                 current = restore_old_photo(current)
 
-            for p in range(passes):
-                is_final_pass = (p == passes - 1)
+            is_skip_upscale = ai_model in ("None", "None (Skip)", "none", "Skip")
+            batch_passes = 1 if is_skip_upscale else passes
+
+            for p in range(batch_passes):
+                is_final_pass = (p == batch_passes - 1)
 
                 # Step 1: Restormer pre-processing
-                if restoration_task and restoration_task != "None":
+                if restoration_task and restoration_task not in ("None", "None (Skip)", "none", "Skip"):
                     current = restore_image(
                         image=current,
                         task=restoration_task,
                         tile_size=512,
                     )
 
-                if not is_final_pass:
+                if not is_final_pass and not is_skip_upscale:
                     intermediate = ai_upscale(
                         image=current,
                         model_name=ai_model,

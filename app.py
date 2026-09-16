@@ -118,17 +118,15 @@ with gr.Blocks(
             capture_mode = gr.Dropdown(
                 choices=[
                     "Standard",
+                    "Wide-angle Distortion Correction",
                     "Digital 2x Quality Recovery",
-                    "1x Lens Correction",
-                    "Wide-angle Portrait Correction",
-                    "Radial Lens Distortion Correction",
                 ],
                 value="Standard",
                 label="Camera Correction",
                 info=(
-                    "Use Digital 2x Quality Recovery for digital zoom softness. "
-                    "Use Wide-angle Portrait Correction for strong fisheye or edge stretching. "
-                    "Use Radial Lens Distortion Correction to correct lens bending without slimming the subject."
+                    "Standard skips correction. "
+                    "Use Wide-angle Distortion Correction for 24mm phone barrel distortion and edge stretching. "
+                    "Use Digital 2x Quality Recovery to clean noise and softness from digital zoom crops."
                 ),
             )
 
@@ -137,12 +135,13 @@ with gr.Blocks(
                     "RealESRGAN x2",
                     "RealESRGAN x4",
                     "RealESRGAN Anime x4",
+                    "None",
                 ],
                 value="RealESRGAN x2",
                 label="AI Upscaling Model",
                 info=(
-                    "Begin with x2. The x4 model requires considerably "
-                    "more memory and processing time. Anime model is for illustrations."
+                    "Select None to skip AI upscaling and keep original resolution. "
+                    "Begin with x2 for balanced detail, or x4 for maximum enlargement."
                 ),
             )
             
