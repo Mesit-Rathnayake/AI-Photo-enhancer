@@ -1,16 +1,20 @@
 :root {
-  --bg-color: #0f172a;
-  --panel-bg: rgba(30, 41, 59, 0.7);
-  --panel-border: rgba(255, 255, 255, 0.1);
+  --bg-color: #0b0f19;
+  --panel-bg: rgba(18, 24, 38, 0.75);
+  --panel-bg-hover: rgba(24, 32, 52, 0.85);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --panel-border-glow: rgba(99, 102, 241, 0.35);
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
+  --text-muted: #64748b;
   --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   --accent-hover: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
   --accent-solid: #6366f1;
+  --accent-soft: rgba(99, 102, 241, 0.15);
   --success: #10b981;
   --error: #ef4444;
-  --font-heading: 'Outfit', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 * {
@@ -22,8 +26,9 @@
 body {
   background-color: var(--bg-color);
   background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.18) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.18) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.6) 0px, transparent 100%);
   background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-body);
@@ -40,72 +45,91 @@ h1, h2, h3, h4, h5, h6 {
 
 .glass-panel {
   background: var(--panel-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--panel-border);
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
 }
 
+/* Button System */
 .btn-primary {
   background: var(--accent-gradient);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 10px 22px;
+  min-height: 44px;
+  border-radius: 10px;
   font-family: var(--font-heading);
-  font-weight: 500;
-  font-size: 1rem;
+  font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-.btn-primary:active {
+.btn-primary:active:not(:disabled) {
   transform: translateY(0);
 }
 
 .btn-primary:disabled {
-  opacity: 0.7;
+  opacity: 0.55;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--text-primary);
   border: 1px solid var(--panel-border);
   padding: 10px 20px;
-  border-radius: 8px;
+  min-height: 44px;
+  border-radius: 10px;
   font-family: var(--font-body);
   font-weight: 500;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
 }
 
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.15);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
@@ -114,56 +138,124 @@ h1, h2, h3, h4, h5, h6 {
 /* Form Elements */
 input[type="range"] {
   accent-color: var(--accent-solid);
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
 }
 
-input[type="checkbox"] {
-  accent-color: var(--accent-solid);
-  width: 18px;
-  height: 18px;
+input[type="range"]:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 select, input[type="text"], input[type="number"] {
   width: 100%;
   min-height: 42px;
-  background-color: rgba(15, 23, 42, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.24);
+  background-color: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   color: var(--text-primary);
-  padding: 9px 38px 9px 13px;
-  border-radius: 8px;
+  padding: 8px 36px 8px 12px;
+  border-radius: 9px;
   font-family: var(--font-body);
-  font-size: 0.9rem;
-  line-height: 1.25;
-  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  font-size: 0.88rem;
+  line-height: 1.3;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 select {
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
-  background-image: linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%), linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
-  background-position: calc(100% - 17px) 18px, calc(100% - 12px) 18px;
-  background-size: 5px 5px, 5px 5px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-position: calc(100% - 12px) center;
+  background-size: 16px 16px;
   background-repeat: no-repeat;
 }
 
-select:hover, input[type="text"]:hover, input[type="number"]:hover {
-  background-color: rgba(30, 41, 59, 0.9);
-  border-color: rgba(129, 140, 248, 0.58);
+select:hover:not(:disabled), input[type="text"]:hover:not(:disabled), input[type="number"]:hover:not(:disabled) {
+  background-color: rgba(24, 32, 52, 0.95);
+  border-color: rgba(129, 140, 248, 0.5);
 }
 
 select:focus, input:focus {
   outline: none;
   border-color: var(--accent-solid);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+select:disabled, input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 select option {
-  background: #1e293b;
+  background: #131b2e;
   color: var(--text-primary);
   padding: 10px;
 }
 
-select option:checked {
-  background: var(--accent-solid);
-  color: white;
+/* Modern Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #ffffff;
+  transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--accent-gradient);
+  border-color: transparent;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+.toggle-switch input:disabled + .toggle-slider {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
