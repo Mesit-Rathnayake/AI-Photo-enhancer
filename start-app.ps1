@@ -22,7 +22,7 @@ if (-not (Test-HttpReady 'http://127.0.0.1:8000/docs')) {
     Start-Process powershell.exe -WorkingDirectory $root -ArgumentList @(
         '-NoExit',
         '-ExecutionPolicy', 'Bypass',
-        '-Command', "& '$python' -m uvicorn api:app --host 0.0.0.0 --port 8000"
+        '-Command', "& '$python' -m uvicorn api:app --host 0.0.0.0 --port 8000 --reload"
     ) | Out-Null
 }
 
