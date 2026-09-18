@@ -1,11 +1,11 @@
 # 📸 Hybrid Photo Enhancer
 
 <p align="center">
-  <img src="frontend/src/assets/hero.png" alt="Hybrid Photo Enhancer Hero" width="100%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.4);" />
+  <img src="frontend/src/assets/hero.png" alt="Hybrid Photo Enhancer Hero" width="100%" />
 </p>
 
 <p align="center">
-  <strong>Restoring detail, correcting optics, and preserving memory with authentic fidelity.</strong>
+  <strong>Restoring detail, correcting optics, and preserving memories with authentic fidelity.</strong>
 </p>
 
 <p align="center">
@@ -20,40 +20,168 @@
 
 ---
 
-## 🌟 The Motive & Background
+## 🌟 Overview
 
-Most modern AI photo enhancers treat image restoration as an aggressive generative hallucination task—often turning genuine human faces into waxy, plastic dolls and shifting vintage color palettes. Furthermore, consumer photography suffers from real-world optical constraints that pure generative models ignore:
+Modern AI photo enhancers often rely heavily on generative restoration. While powerful, aggressive enhancement can introduce unwanted details, alter facial features, or shift the original character and color of an image.
 
-1. **The 24mm Smartphone Dilemma:** In most mid-range smartphones, the primary high-resolution sensor operates strictly at **1x zoom (~24mm full-frame equivalent)** without dedicated optical telephoto glass. In photography, **50mm to 85mm** is the standard focal range for natural portraits. Close-up shots at 24mm cause pronounced **barrel distortion and perspective stretching** (prominent centers and elongated edges).
-2. **The Digital Zoom Softness Trap:** When users switch to 2x zoom on mid-range phones, the camera merely performs a digital crop into the 1x sensor, resulting in soft, interpolated pixels and amplified sensor noise.
-3. **The CVIP Learning Objective:** Built as a hands-on exploration of **Computer Vision and Image Processing (CVIP)**, this project investigates how classical mathematical transformations (OpenCV geometry remapping, bilateral filtering, unsharp masking, and color-space decomposition) can be composed with deep learning architectures (Real-ESRGAN, GFPGAN, Restormer) into a unified, explainable, and local-first application.
+**Hybrid Photo Enhancer** takes a different approach.
+
+The project combines **classical Computer Vision and Image Processing** with **modern deep learning models** to build a modular, explainable, and privacy-first photo enhancement pipeline.
+
+The system is designed around three practical photography problems:
+
+### 📱 The 24mm Smartphone Dilemma
+
+Many mid-range smartphones rely primarily on a wide-angle main camera operating around **1× zoom (~24mm full-frame equivalent)** without dedicated optical telephoto hardware.
+
+When used for close-up portraits, wide-angle optics can introduce:
+
+* Perspective stretching
+* Barrel distortion
+* Enlarged facial features near the center
+* Elongation near image edges
+
+A more natural portrait perspective is typically associated with approximately **50–85mm equivalent focal lengths**.
+
+### 🔎 The Digital Zoom Softness Trap
+
+When switching to 2× zoom on phones without a dedicated 2× telephoto camera, the device may effectively crop into the main sensor.
+
+This can result in:
+
+* Reduced spatial detail
+* Interpolation artifacts
+* Increased visibility of sensor noise
+* Soft facial and texture details
+
+The enhancer attempts to recover some of this perceived quality using a combination of classical image processing and AI-based reconstruction.
+
+### 🧠 The CVIP Learning Objective
+
+This project was built as a hands-on exploration of **Computer Vision and Image Processing (CVIP)**.
+
+It experiments with how mathematical transformations and traditional image-processing techniques can be combined with deep learning architectures such as:
+
+* **Real-ESRGAN** — Super-resolution
+* **GFPGAN** — Face restoration
+* **Restormer** — Image deblurring
+* **OpenCV** — Geometric correction and classical enhancement
 
 > [!NOTE]
-> This project is designed as an experimental learning playground to test tool capabilities and understand image processing trade-offs. While an algorithm cannot physically replace optical telephoto glass, combining classical CV with modern models achieves a natural balance between detail recovery and authenticity.
+> This is an experimental learning project rather than a replacement for optical telephoto hardware. The goal is to explore the trade-offs between classical computer vision, deep learning, detail recovery, and image authenticity.
 
 ---
 
-## 🚀 Key Highlights & Features
+## 🚀 Key Features
 
-### 1. 🔍 Camera & Distortion Correction (Classical CV)
-- **Wide-Angle Distortion Correction:** Uses pinhole camera intrinsic matrices and polynomial radial distortion remapping (`cv2.undistort`) to flatten 24mm wide-angle barrel distortion on portraits without compressing proportions.
-- **Digital 2x Quality Recovery:** Combines edge-preserving bilateral filtering with high-frequency contrast recovery to clean up softness and noise from digital zoom sensor crops.
+### 1. 🔍 Camera & Distortion Correction
+
+Classical computer vision techniques are used to address optical and digital capture limitations.
+
+* **Wide-Angle Distortion Correction**
+
+  * Uses camera intrinsic parameters and radial distortion models.
+  * Applies OpenCV geometric remapping to correct wide-angle barrel distortion.
+
+* **Digital 2× Quality Recovery**
+
+  * Combines edge-preserving bilateral filtering with high-frequency sharpening.
+  * Attempts to recover perceived detail from digitally cropped images.
+
+---
 
 ### 2. 🧠 Deep Learning Super-Resolution & Deblurring
-- **Real-ESRGAN Super-Resolution (x2 / x4 / Anime):** Residual-in-Residual Dense Blocks (RRDBNet) with sub-pixel convolution upsampling.
-- **VRAM-Aware Tiling:** Divides high-resolution tensors into spatial chunks with overlap blending to prevent GPU out-of-memory errors on consumer hardware.
-- **Restormer Transformer Deblurring:** Multi-Dconv Head Transposed Attention (MDTA) operating across channel dimensions ($O(C^2)$ complexity) to invert motion blur and defocus softness.
 
-### 3. 👤 Localized Face Reconstruction & Natural Finishing
-- **GFPGAN Face Restoration:** Restores degraded facial landmarks (eyes, mouth, contours) using pre-trained facial priors.
-- **Edge-Preserving Skin Smoothing:** Localized Bilateral Filtering inside Haar-cascade face masks softens harsh artifacts while preserving natural edges.
-- **Color Preservation:** Luminance-chrominance separation (LAB/RGB blending) ensures reconstructed facial details match the original photo's tone without artificial GAN color shift.
-- **Old-Photo Mode:** Non-Local Means Denoising coupled with Contrast-Limited Adaptive Histogram Equalization (CLAHE) for vintage and worn photo scans.
+#### Real-ESRGAN
 
-### 4. 🎛️ Modular Execution & Granular Print Export
-- **Flexible Skip Modes:** Each stage (Upscaling, Distortion Correction, Deblurring, Face Restoration) can be individually toggled or bypassed (`None / Skip`), allowing users to run *only* distortion correction, *only* deblurring, or *only* finishing.
-- **Print-Ready Metadata:** Configurable sharpening strength, saturation adjustments, JPEG quality, and target export PPI (72, 300, 600).
-- **Batch Processing:** Multi-image queueing with automatic progress tracking and ZIP packaging.
+Supports AI-based image upscaling using **Real-ESRGAN / RRDBNet**.
+
+* 2× and 4× super-resolution
+* Anime-oriented enhancement mode
+* Residual-in-Residual Dense Blocks
+* Tiled inference for memory-efficient processing
+
+#### VRAM-Aware Tiling
+
+Large images are divided into smaller overlapping tiles before AI inference.
+
+This allows the application to process high-resolution images while reducing GPU memory requirements.
+
+#### Restormer
+
+The pipeline optionally uses **Restormer** for image deblurring.
+
+Restormer's **Multi-Dconv Head Transposed Attention (MDTA)** operates primarily across channel dimensions, providing an efficient transformer-based approach to image restoration.
+
+---
+
+### 3. 👤 Face Restoration & Natural Finishing
+
+#### GFPGAN Face Restoration
+
+Uses pre-trained facial priors to reconstruct degraded facial details such as:
+
+* Eyes
+* Mouth
+* Facial contours
+* Fine facial structure
+
+#### Edge-Preserving Skin Smoothing
+
+Localized bilateral filtering is applied to detected facial regions to reduce harsh restoration artifacts while retaining important edges.
+
+#### Color Preservation
+
+The pipeline separates luminance and chrominance information during parts of the finishing process to reduce unwanted color changes introduced by AI restoration.
+
+#### 🕰️ Old Photo Mode
+
+Designed for scanned or degraded photographs using:
+
+* Non-Local Means Denoising
+* CLAHE — Contrast Limited Adaptive Histogram Equalization
+* Contrast enhancement
+* Noise reduction
+
+---
+
+### 4. 🎛️ Modular Processing Pipeline
+
+Each processing stage can be independently enabled or skipped.
+
+Available stages include:
+
+* Distortion correction
+* Digital zoom enhancement
+* Old-photo restoration
+* Deblurring
+* AI upscaling
+* Face restoration
+* Final sharpening
+* Saturation adjustment
+* Print/export configuration
+
+This allows the application to function as either a complete restoration pipeline or as a collection of individual image-processing tools.
+
+### 📦 Batch Processing
+
+* Multiple-image processing
+* Automatic progress tracking
+* ZIP packaging
+* Local output management
+
+### 🖨️ Print-Ready Export
+
+Configurable output settings include:
+
+* Sharpening strength
+* Saturation
+* JPEG quality
+* Target PPI
+
+  * 72 PPI
+  * 300 PPI
+  * 600 PPI
 
 ---
 
@@ -61,33 +189,41 @@ Most modern AI photo enhancers treat image restoration as an aggressive generati
 
 ```mermaid
 flowchart LR
-    A[React + TS Web UI] -->|Multipart Form-Data| B[FastAPI Gateway]
+    A[React + TypeScript UI] -->|Multipart Form Data| B[FastAPI Gateway]
+
     B --> C[Validation & Normalization]
-    
+
     C --> D{Capture Correction}
+
     D -->|Wide-Angle Fix| D1[OpenCV Radial Undistort]
     D -->|Digital 2x| D2[Bilateral Denoise + Unsharp]
     D -->|Standard / Skip| E{Old Photo Mode}
+
     D1 --> E
     D2 --> E
-    
+
     E -->|Enabled| E1[NL-Means + CLAHE]
     E -->|Disabled| F{Restormer Deblur}
+
     E1 --> F
-    
+
     F -->|Motion / Defocus| F1[MDTA Transformer]
     F -->|Skip| G{AI Upscaling}
+
     F1 --> G
-    
-    G -->|Real-ESRGAN x2/x4| G1[RRDBNet Tiled Inference]
-    G -->|Skip Model| H{Face Restoration}
+
+    G -->|Real-ESRGAN x2 / x4| G1[RRDBNet Tiled Inference]
+    G -->|Skip| H{Face Restoration}
+
     G1 --> H
-    
-    H -->|GFPGAN Enabled| H1[Facial Priors + Skin Smooth + Color Blend]
+
+    H -->|GFPGAN Enabled| H1[Facial Priors + Skin Smoothing + Color Blend]
     H -->|Disabled| I[Finishing Pass]
+
     H1 --> I
-    
+
     I -->|Sharpen + Saturation + PPI| J[JPEG / Batch ZIP]
+
     J -->|Stream Output| A
 ```
 
@@ -97,104 +233,249 @@ flowchart LR
 
 ```text
 Hybrid-Photo-Enhancer/
-├── api.py                     # FastAPI REST endpoints with multipart handling
-├── app.py                     # Standalone Gradio web application
-├── start-app.ps1              # Unified PowerShell launcher with health checks & live reload
-├── start-app.bat              # Double-clickable Windows launcher
-├── requirements.txt           # Python dependencies (PyTorch, OpenCV, FastAPI, etc.)
 │
-├── frontend/                  # Modern React + TypeScript interface
+├── api.py                         # FastAPI REST API
+├── app.py                         # Standalone Gradio application
+├── start-app.ps1                  # PowerShell launcher
+├── start-app.bat                  # Windows launcher
+├── requirements.txt               # Python dependencies
+│
+├── frontend/
 │   ├── src/
-│   │   ├── App.tsx            # Main application component & pointer slider logic
-│   │   ├── App.css            # Component styles, toggle switches, and responsive layout
-│   │   ├── index.css          # Design system tokens and global form styles
-│   │   └── main.tsx           # React entry point
-│   ├── package.json           # Frontend dependencies (Lucide icons, Vite, TypeScript)
-│   └── vite.config.ts         # Vite bundler configuration
+│   │   ├── App.tsx                # Main application component
+│   │   ├── App.css                # Component styles
+│   │   ├── index.css              # Global styles and design tokens
+│   │   └── main.tsx               # React entry point
+│   │
+│   ├── package.json               # Frontend dependencies
+│   └── vite.config.ts              # Vite configuration
 │
 ├── src/
 │   ├── models/
-│   │   ├── ai_upscaler.py     # Real-ESRGAN & GFPGAN inference adapters with direct 1x mode
-│   │   └── restormer.py       # Restormer transformer deblurring loader & execution
+│   │   ├── ai_upscaler.py         # Real-ESRGAN & GFPGAN adapters
+│   │   └── restormer.py           # Restormer inference
+│   │
 │   └── processing/
-│       └── classical_enhancer.py # Lens distortion correction, CLAHE, bilateral smoothing
+│       └── classical_enhancer.py  # Classical CV processing
 │
-├── models/                    # Model weights directory (downloaded on demand)
-└── outputs/                   # Local processing output destination (excluded from git)
+├── models/                         # Model weights
+└── outputs/                        # Generated images
 ```
 
 ---
 
 ## 💻 Tech Stack
 
-| Domain | Technologies & Libraries |
-| :--- | :--- |
-| **Frontend** | React 19, TypeScript, Vite, Vanilla CSS Design System, Lucide React Icons |
-| **Backend & API** | Python 3.10+, FastAPI, Uvicorn, Pydantic |
-| **Deep Learning** | PyTorch, Real-ESRGAN (RRDBNet), GFPGAN (v1.4), Restormer (MDTA) |
-| **Computer Vision** | OpenCV (`cv2`), NumPy, Pillow (`PIL`), SciPy |
-| **Local Automation** | PowerShell Scripting, Batch Automation |
+| Category            | Technologies                                          |
+| ------------------- | ----------------------------------------------------- |
+| **Frontend**        | React 19, TypeScript, Vite, Vanilla CSS, Lucide React |
+| **Backend**         | Python 3.10+, FastAPI, Uvicorn, Pydantic              |
+| **Deep Learning**   | PyTorch, Real-ESRGAN, GFPGAN, Restormer               |
+| **Computer Vision** | OpenCV, NumPy, Pillow, SciPy                          |
+| **Automation**      | PowerShell, Windows Batch                             |
 
 ---
 
 ## 🔒 Privacy by Design
 
-- **100% Local Processing:** Every photo is processed directly on your local workstation GPU/CPU.
-- **Zero Cloud Uploads:** No external APIs or cloud servers receive your photos.
-- **Clean Repository:** Model weights, caches, virtual environments, and generated output files are excluded from version control.
+Privacy is a core design principle of the application.
+
+* **100% Local Processing** — Images are processed directly on the user's workstation.
+* **No Cloud Uploads** — Photos are not sent to external APIs or cloud processing services.
+* **Local AI Inference** — Deep learning models run locally using available CPU/GPU resources.
+* **Clean Repository** — Model weights, caches, virtual environments, and generated outputs are excluded from version control.
+
+Your photos stay on your machine.
 
 ---
 
-## ⚡ Quickstart & Running Locally
+## ⚡ Quick Start
 
 ### Prerequisites
-- Windows 10/11, macOS, or Linux
-- Python 3.10+ (with virtual environment at `.venv`)
-- Node.js 18+ & npm (for frontend)
-- NVIDIA GPU with CUDA support (recommended, but CPU inference is fully supported)
 
-### 🚀 One-Click Launch (Windows)
+* Windows 10/11, macOS, or Linux
+* Python 3.10+
+* Node.js 18+
+* npm
+* NVIDIA GPU with CUDA support *(recommended)*
+* CPU inference is also supported
 
-Simply double-click the **`Launch AI Photo Enhancer.bat`** on your Desktop, or run:
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Mesit-Rathnayake/Hybrid-Photo-Enhancer.git
+cd Hybrid-Photo-Enhancer
+```
+
+### 2. Set Up the Python Environment
+
+```bash
+python -m venv .venv
+```
+
+Activate the environment:
+
+**Windows PowerShell**
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Install Frontend Dependencies
+
+```bash
+cd frontend
+npm install
+cd ..
+```
+
+### 4. Launch the Application
+
+#### Windows
+
+You can either double-click:
+
+```text
+start-app.bat
+```
+
+or run:
 
 ```powershell
 .\start-app.ps1
 ```
 
-The launcher will:
-1. Verify the Python virtual environment and frontend dependencies.
-2. Start the **FastAPI backend** (`http://127.0.0.1:8000`) with live reloading.
-3. Start the **Vite React frontend** (`http://127.0.0.1:5173`).
-4. Wait for both services to be healthy and automatically open the application in your default web browser.
+The launcher:
+
+1. Checks the Python environment.
+2. Verifies frontend dependencies.
+3. Starts the FastAPI backend.
+4. Starts the Vite development server.
+5. Performs service health checks.
+6. Opens the application in your default browser.
+
+Default development endpoints:
+
+```text
+Backend  → http://127.0.0.1:8000
+Frontend → http://127.0.0.1:5173
+```
 
 ---
 
-## 📐 Mathematical & CVIP Concepts Applied
+## 📐 Mathematical & CVIP Concepts
 
-- **Brown-Conrady Radial Distortion Model:**
-  $$\begin{bmatrix} x_{undistorted} \\ y_{undistorted} \end{bmatrix} = \begin{bmatrix} x \\ y \end{bmatrix} \left( 1 + k_1 r^2 + k_2 r^4 + k_3 r^6 \right)$$
-- **Pinhole Camera Intrinsic Matrix ($K$):**
-  $$K = \begin{bmatrix} f_x & 0 & c_x \\ 0 & f_y & c_y \\ 0 & 0 & 1 \end{bmatrix}$$
-- **Bilateral Filtering for Edge-Preserving Smoothing:**
-  $$I^{filtered}(p) = \frac{1}{W_p} \sum_{q \in \Omega} I(q) \, \exp\left(-\frac{\|p - q\|^2}{2\sigma_s^2}\right) \exp\left(-\frac{\|I_p - I_q\|^2}{2\sigma_r^2}\right)$$
-- **Gaussian Unsharp Masking:**
-  $$I_{sharp} = I + \alpha \left(I - G_\sigma * I\right)$$
+The project applies several classical computer vision and image-processing concepts.
+
+### 1. Brown-Conrady Radial Distortion
+
+Radial distortion can be modeled as:
+
+```text
+x' = x(1 + k₁r² + k₂r⁴ + k₃r⁶)
+y' = y(1 + k₁r² + k₂r⁴ + k₃r⁶)
+```
+
+where:
+
+* `x, y` — Original normalized coordinates
+* `x', y'` — Distorted/undistorted coordinates
+* `k₁, k₂, k₃` — Radial distortion coefficients
+* `r` — Distance from the optical center
 
 ---
 
-## 🛠️ Continuous Learning & Future Improvements
+### 2. Pinhole Camera Intrinsic Matrix
 
-As an ongoing CVIP project, future exploration areas include:
-- [ ] Automated camera calibration via EXIF metadata extraction to compute focal length dynamically.
-- [ ] Integration of face parsing masks for multi-person group portraits.
-- [ ] Optimization with ONNX Runtime / TensorRT for sub-second inference latency.
-- [ ] Guided scratch and dust inpainting for severely degraded archival prints.
+The camera intrinsic matrix is represented as:
+
+```text
+        ┌             ┐
+        │ fx   0   cx │
+K   =   │ 0   fy   cy │
+        │ 0    0    1 │
+        └             ┘
+```
+
+where:
+
+* `fx, fy` — Focal lengths in pixel units
+* `cx, cy` — Principal point coordinates
+
+---
+
+### 3. Bilateral Filtering
+
+Bilateral filtering combines spatial and intensity similarity:
+
+```text
+I_filtered(p) =
+    1 / Wp × Σ I(q)
+    × exp(-||p-q||² / 2σs²)
+    × exp(-||I(p)-I(q)||² / 2σr²)
+```
+
+Unlike conventional Gaussian smoothing, bilateral filtering can reduce noise while preserving important edges.
+
+---
+
+### 4. Gaussian Unsharp Masking
+
+Sharpening is performed using:
+
+```text
+I_sharp = I + α(I - Gσ * I)
+```
+
+where:
+
+* `I` — Original image
+* `Gσ * I` — Gaussian-blurred image
+* `α` — Sharpening strength
+* `σ` — Gaussian standard deviation
+
+---
+
+## 🧪 Continuous Learning & Future Work
+
+This project is also an ongoing CVIP learning playground.
+
+Potential future improvements include:
+
+* [ ] Automatic camera calibration using EXIF metadata
+* [ ] Dynamic focal-length estimation
+* [ ] Face parsing masks for multi-person portraits
+* [ ] ONNX Runtime optimization
+* [ ] TensorRT acceleration
+* [ ] Faster GPU inference
+* [ ] Guided scratch and dust removal
+* [ ] AI-assisted archival photo inpainting
+* [ ] More advanced camera/lens profiles
 
 ---
 
 ## 📄 License
 
-Please review the licenses of the respective open-source models and libraries used:
-- [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) (BSD-3-Clause)
-- [GFPGAN](https://github.com/TencentARC/GFPGAN) (Apache 2.0)
-- [Restormer](https://github.com/swz30/Restormer) (Apache 2.0)
+This project incorporates open-source models and libraries with their own licenses.
+
+Please review the respective licenses before redistributing or modifying the associated components.
+
+* [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) — BSD-3-Clause
+* [GFPGAN](https://github.com/TencentARC/GFPGAN) — Apache 2.0
+* [Restormer](https://github.com/swz30/Restormer) — Apache 2.0
+
+---
+
+## ⭐ Project Philosophy
+
+> **Classical Computer Vision for control.
+> Deep Learning for reconstruction.
+> Local processing for privacy.**
+
+Hybrid Photo Enhancer is an exploration of what happens when traditional image-processing mathematics and modern AI restoration are treated as complementary tools rather than competing approaches.
